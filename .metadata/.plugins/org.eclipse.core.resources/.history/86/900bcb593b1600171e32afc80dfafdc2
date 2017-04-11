@@ -1,0 +1,174 @@
+package rscpviewer;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+
+import edu.byu.ece.rapidSmith.design.subsite.Cell;
+import edu.byu.ece.rapidSmith.design.subsite.CellDesign;
+import edu.byu.ece.rapidSmith.design.subsite.CellNet;
+import edu.byu.ece.rapidSmith.design.subsite.CellPin;
+import edu.byu.ece.rapidSmith.device.Bel;
+import edu.byu.ece.rapidSmith.device.BelPin;
+import edu.byu.ece.rapidSmith.interfaces.vivado.TincrCheckpoint;
+import edu.byu.ece.rapidSmith.interfaces.vivado.VivadoInterface;
+
+public class GraphGrepSX {
+	public static void createFile(String input_filename) {
+		TincrCheckpoint goldStandard;
+		TincrCheckpoint tcp;
+
+		BufferedWriter bw = null;
+		FileWriter fw = null;
+
+		try {
+			goldStandard = VivadoInterface.loadTCP(input_filename);
+			tcp = VivadoInterface.loadTCP("/home/adam/vivado_workspace/counter_top/counter_top.tcp");
+		} catch (IOException e) {
+			System.out.println("It didn't work");
+			e.printStackTrace();
+			return;
+		}
+
+		CellDesign goldDesign = goldStandard.getDesign();
+		Collection<Cell> cells_c_gs = goldDesign.getCells();
+		ArrayList<Cell> goldCells = new ArrayList<Cell>();
+		ArrayList<Bel> goldBels = new ArrayList<Bel>();
+		ArrayList<CellNet> goldNets = new ArrayList<CellNet>(goldDesign.getNets());
+		HashSet<BelPin> goldBelPins_set = new HashSet<BelPin>();
+		HashSet<String> goldCellPins_set = new HashSet<String>();
+
+		for (Cell c : cells_c_gs) {
+			//System.out.println(c.toString() + " with type " + c.getType());
+			//Bel b = c.getBel();
+			//if (b == null) { // Cells that end up here are ports for OOC modules
+			//	System.out.println("null bel from cell: " +  c.toString());
+			//	c.getPins();
+			//} else {
+			//c.pin
+			goldCells.add(c);
+			Collection<CellPin> cellpins = c.getPins(); // Ask Thomas about the RS2 description of this function
+			for (CellPin pin : cellpins) {
+				//System.out.println("  " + pin.toString());
+				// Get the number of BelPins that this pin is mapped to.
+				// In most cases, CellPins are mapped to only one BelPin, but it is possible that they 
+				// can be mapped to 0 or more than 1 BelPins.
+				/*int belPinCount = pin.getMappedBelPinCount();
+					if (belPinCount == 0) {
+						// Why does this happen sometimes? Something to ask Dr. Hutchings on Thursday
+						System.out.println("WARNING: pin " + pin.getFullName().toString() + " has 0 BelPins");
+					} else if (belPinCount == 1) {
+						// This is familiar territory. let's hope all pins only map to one BelPin!
+						goldBelPins_set.add(pin.getMappedBelPin());
+					} else {
+						HashSet<BelPin> belpins = new HashSet<BelPin>(pin.getMappedBelPins());
+						goldBelPins_set.addAll(belpins);
+						System.out.println("WARNING: pin " + pin.getFullName().toString() + " has 2+ BelPins");
+					}*/			
+				goldCellPins_set.add(pin.getFullName());
+				//}
+				//goldBels.add(b);
+			}
+		}
+
+		ArrayList<String> goldCellPins = new ArrayList<String>(goldCellPins_set);
+		Collections.sort(goldCellPins, new Comparator<String>() {
+			public int compare(String a, String b) {
+				return a.compareTo(b);
+			}
+		});
+
+		//for (CellPin pin : goldCellPins) {
+			//System.out.println(pin.getFullName());
+			// TODO: How do we handle INOUT pins in making this graph?? Ask Dr. Hutchings on Thursday
+			// Answer: INOUT Pins have an in pin and an out pin, and they never toggle once implemented on a design;
+			// In other words, these should not be an issue. If they appear in the design, they will either be in pins or
+			// out pins, but not both at the same time.
+			//System.out.println(pin.isInpin());
+		//}
+
+		try {
+			String filename = "counter0_gs_ggsx.txt";
+			fw = new FileWriter(filename);
+			bw = new BufferedWriter(fw);
+			bw.write("#" + filename + "\n");
+			//bw.write(goldBels.size() + "\n");
+			// This isn't what you actually want to be doing -- the vertices in this graph are the BelPins, not the Bels themselves...
+			/*for (Bel b : goldBels) {
+				bw.write(b.getType().toString() + "\n");
+			//	b.ge
+			}*/
+			for (String pin : goldCellPins) {
+				//bw.write(pin.getCell().getType() + "/" + pin.getName() + "\n");
+				bw.write(pin + "\n");
+			}
+			// Make a directed graph (gfd)
+			// You need to find out how to distinguish sources from sinks
+			// what's the difference between n.getSourcePin and n.getAllSourcePins
+			// TODO QUESTION: Is is possible for a net to have two sources?
+			// Save this for Thursday's meeting
+			// Answer: This shouldn't be a problem, i.e. it shouldn't be something that we encounter...
+			int edge_count = 0;
+			String edge_buffer = "";
+			for (CellNet n : goldNets) {
+				//bw.write(n.toString() + "\n");
+				//System.out.println(n.toString());
+				//ArrayList<CellPin> goldCellPins = new ArrayList<CellPin>(n.getPins());
+				//for (CellPin pin : goldCellPins) {
+				//	goldBelPins.add(pin.getMappedBelPin());
+				//}
+				/*BelPin source = n.getSourceBelPin();
+				if (source != null) {
+					Collection<BelPin> sinks = n.getBelPins();
+					for (BelPin sink : sinks) {
+						bw.write(source.toString() + " " + sink.toString() + "\n");
+					}
+				}*/
+				List<CellPin> sources = n.getAllSourcePins();
+				if (sources.size() == 0) {
+					System.out.println("WARNING: 0 sources");
+				} else if (sources.size() == 1) {
+					Collection<CellPin> sinks = n.getSinkPins();
+					CellPin source = sources.get(0);
+					int source_index = goldCellPins.indexOf(source.getFullName());
+					for (CellPin sink : sinks) {
+						// Find which index in goldCellPins this sink and source correspond to
+						// TODO fix this -- you broke it when you changed from CellPins to Strings
+						int sink_index = goldCellPins.indexOf(sink);
+						//bw.write(source_index + " " + sink_index + "\n");
+						edge_buffer += source_index + " " + sink_index + "\n";
+						edge_count = edge_count + 1;
+					}
+				} else {
+					System.out.println("WARNING: 2+ sources");
+					return; // Is this return necessary? How should multiple sources be handled?
+				}
+			}
+			// TODO: I'm guessing we'll want to label the edges to help with speedup?
+			// According the GraphGrepSX_v3.3/exs/db.geu file, it looks like the format for edges is
+			// <source> <sink> <name>
+			// Let's test this out though and test it just to be sure?
+			bw.write(edge_count);
+			System.out.println(edge_count);
+			bw.write(edge_buffer);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (bw != null)
+					bw.close();
+				if (fw != null)
+					fw.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+}
+

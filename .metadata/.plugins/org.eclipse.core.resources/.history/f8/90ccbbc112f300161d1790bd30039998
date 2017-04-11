@@ -1,0 +1,23 @@
+package mySrc;
+
+import java.io.IOException;
+
+import edu.byu.ece.rapidSmith.design.subsite.CellDesign;
+import edu.byu.ece.rapidSmith.design.subsite.CellLibrary;
+import edu.byu.ece.rapidSmith.device.Device;
+import edu.byu.ece.rapidSmith.interfaces.vivado.TincrCheckpoint;
+import edu.byu.ece.rapidSmith.interfaces.vivado.VivadoInterface;
+public class helloWorld {
+
+	public static void main(String[] args) throws IOException {
+		System.out.println("Hello World");
+		
+		TincrCheckpoint tcp = VivadoInterface.loadTCP("/home/adam/VivadoWorkspace/HD_xilinx_adam/tincrtest.tcp", true);
+		CellDesign design = tcp.getDesign();
+		Device device = tcp.getDevice();
+		CellLibrary libCells = tcp.getLibCells();
+		
+		VivadoInterface.writeTCP("/home/adam/test/", design, device, libCells);
+	}
+
+}
