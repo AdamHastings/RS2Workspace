@@ -116,7 +116,7 @@ public class GraphGrepSX {
 	 */
 	public static void createFile(Collection<CellNet> nets, String filename) {
 		
-		String moduleName = "counter0" + "/";
+		String moduleName = "aes_128_0" + "/";
 		
 		// Objects for file writing
 		BufferedWriter bw = null;

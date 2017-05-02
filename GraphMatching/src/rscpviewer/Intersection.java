@@ -37,21 +37,26 @@ public class Intersection {
 		ArrayList<String> netnames_ooc = new ArrayList<String>();
 		
 		// The name of the OOC module (This would best be passed in as a parameter)
-		String moduleName = "counter0" + "/";
+		String moduleName = "aes_128_0" + "/";
 		
 		// Fill netnames_top with the names of the CellNets in netlist_top
 		for (CellNet n : netlist_top) {
 			netnames_top.add(n.getName());
 		}
-		
+		for (String name : netnames_top) {
+			System.out.println(name);
+		}
+
 		// Fill netnames_ooc with the names of the CellNets in netlist_ooc
 		for (CellNet n : netlist_ooc) {
 			if (n.getName().startsWith(moduleName)) {
 				netnames_ooc.add(n.getName().replaceFirst("^" + moduleName, ""));				
 			}
 		}
-		
-		//System.out.println(x);
+		System.out.println("=============");
+		for (String name : netnames_ooc) {
+			System.out.println("--" + name);
+		}
 		
 		// A list to store the intersection of the two netnames lists
 		// Initialize it with netnames_top and remove non-intersecting items later
@@ -92,7 +97,9 @@ public class Intersection {
 		System.out.println("");
 		
 		for (CellNet c : commonElements_ooc) {
-			System.out.print(c.getName() + ", ");
+			if (c != null) {
+				System.out.print(c.getName() + ", ");
+			}
 		}
 		System.out.println("");
 		
