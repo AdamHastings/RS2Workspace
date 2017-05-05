@@ -123,20 +123,24 @@ public class GraphGrepSX {
 		FileWriter fw = null;
 
 		// A set to contain all pins connected to the nets
-		HashSet<String> goldCellPins_set = new HashSet<String>();
+		HashSet<String> CellPins_set = new HashSet<String>();
 
+		// Get all pins connected to all nets
 		for (CellNet n : nets) {
 			// Get all pins connected to this net
+			if (n == null) {
+				System.out.println("Null CellNet?");
+			}
 			Collection<CellPin> cellpins = n.getPins();
 			
 			// Add each of the pins to the goldcellPins_set
 			for (CellPin pin : cellpins) {		
-				goldCellPins_set.add(pin.getFullName());
+				CellPins_set.add(pin.getFullName());
 			}
 		}
 
 		// Place the goldCellPins_set into a list
-		ArrayList<String> goldCellPins = new ArrayList<String>(goldCellPins_set);
+		ArrayList<String> goldCellPins = new ArrayList<String>(CellPins_set);
 		// Sort the list in lexicographical order
 		Collections.sort(goldCellPins, new Comparator<String>() {
 			public int compare(String a, String b) {
