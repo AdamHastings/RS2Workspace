@@ -9,7 +9,10 @@ local.properties
 .settings/
 .loadpath
 .recommenders
+/RemoteSystemsTempFiles
 GraphMatching/.metadata/*
+GraphMatching/IO
+GraphMatching/matches
 
 # External tool builders
 .externalToolBuilders/
